@@ -224,4 +224,8 @@ public class Packet {
     public SecurityModes getSecurity() {
         return security;
     }
+
+    public byte[] getData() {
+        return this.bout.toByteArray();
+    }
 }

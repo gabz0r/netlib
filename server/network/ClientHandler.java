@@ -1,6 +1,7 @@
 package server.network;
 
 import server.network.packet.*;
+import server.network.packet.enums.*;
 
 import java.io.*;
 import java.net.*;
@@ -34,22 +35,27 @@ public class ClientHandler extends Thread {
     @Override
     public void run() {
         buffer = new byte[8192];
-        try {
-            int numBytes = inStream.read(buffer);
-            byte[] resBuffer = new byte[numBytes];
+        while(true) {
+            try {
+                int numBytes = inStream.read(buffer);
+                byte[] resBuffer = new byte[numBytes];
 
-            System.arraycopy(buffer,0,resBuffer,0,numBytes);
+                System.arraycopy(buffer,0,resBuffer,0,numBytes);
 
-            Packet p = PacketBuilder.buildFromRaw(resBuffer);
-            PacketHandler.parse(p);
+                Packet p = PacketBuilder.buildFromRaw(resBuffer);
+                PacketHandler.parse(p, this);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                return;
+            }
         }
     }
 
 
     public void sendPacket(Packet out) {
+        if(out.getSecurity() == SecurityModes.ESM_CRYPTED) {
+            out = Encryption.encrypt(out);
+        }
         try {
             outStream.write(out.getPacket());
             outStream.flush();

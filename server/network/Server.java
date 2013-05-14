@@ -14,6 +14,8 @@ import java.util.concurrent.*;
  * To change this template use File | Settings | File Templates.
  */
 public class Server extends Thread {
+    public static short currentClientVersion = 0x0001;
+
     private ServerSocket server;
     ExecutorService clientPool = Executors.newCachedThreadPool();
 

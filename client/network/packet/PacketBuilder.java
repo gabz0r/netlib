@@ -26,6 +26,9 @@ public class PacketBuilder {
         dis.read(dt, 0, payload);
 
         Packet ret = new Packet(opcode, security, dt);
+        if(security == SecurityModes.ESM_CRYPTED) {
+            ret = Encryption.decrypt(ret);
+        }
 
         return ret;
     }

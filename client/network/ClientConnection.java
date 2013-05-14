@@ -1,9 +1,9 @@
 package client.network;
 
 import client.Main;
-import server.network.packet.*;
-import server.network.packet.enums.DataTypes;
-import server.network.packet.enums.SecurityModes;
+import client.network.packet.enums.*;
+import client.network.packet.*;
+import client.network.packet.enums.*;
 
 import java.io.*;
 import java.net.*;
@@ -16,6 +16,8 @@ import java.net.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ClientConnection extends Thread {
+    public static short VERSION = 0x0001;
+
     private Socket client;
     private byte[] buffer;
 
@@ -36,26 +38,34 @@ public class ClientConnection extends Thread {
 
     @Override
     public void run() {
-        Packet hello = new Packet(0x0A, SecurityModes.ESM_PLAIN);
-        hello.write(DataTypes.EDT_STRING, "Hallo Welt");
-        sendPacket(hello);
+        System.out.println("Connected!");
+        Packet version = new Packet(Opcodes.OUT.VERSION_CONTROL, SecurityModes.ESM_PLAIN);
+        version.write(DataTypes.EDT_STRING, "version-control");
+        version.write(DataTypes.EDT_SHORT, ClientConnection.VERSION);
+        System.out.println("Sending version...");
+        sendPacket(version);
 
         buffer = new byte[8192];
+        while(true) {
         try {
-            int numBytes = inStream.read(buffer);
-            byte[] resBuffer = new byte[numBytes];
+                int numBytes = inStream.read(buffer);
+                byte[] resBuffer = new byte[numBytes];
 
-            System.arraycopy(buffer,0,resBuffer,0,numBytes);
+                System.arraycopy(buffer,0,resBuffer,0,numBytes);
 
-            Packet p = PacketBuilder.buildFromRaw(resBuffer);
-            PacketHandler.parse(p);
+                Packet p = PacketBuilder.buildFromRaw(resBuffer);
+                PacketHandler.parse(p);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                break;
+            }
         }
     }
 
     public void sendPacket(Packet out) {
+        if(out.getSecurity() == SecurityModes.ESM_CRYPTED) {
+            out = Encryption.encrypt(out);
+        }
         try {
             outStream.write(out.getPacket());
             outStream.flush();
@@ -63,5 +73,4 @@ public class ClientConnection extends Thread {
             e.printStackTrace();
         }
     }
-
 }
